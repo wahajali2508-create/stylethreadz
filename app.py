@@ -1,36 +1,56 @@
 import streamlit as st
-import feedparser
+import requests
+import xml.etree.ElementTree as ET
 
-# RSS feed URL (Spreadshop products)
+# RSS feed URL
 RSS_URL = "https://style-threadz.myspreadshop.net/1482874/products.rss?pushState=false&targetPlatform=google"
 
+@st.cache_data(ttl=600)
+def fetch_products_from_rss():
+    """Fetch products from Spreadshop RSS feed"""
+    resp = requests.get(RSS_URL, timeout=10)
+    resp.raise_for_status()
+    root = ET.fromstring(resp.text)
+
+    products = []
+    for item in root.findall('.//item'):
+        title = item.findtext('title') or ''
+        price = item.findtext('{http://base.google.com/ns/1.0}price') or ''
+        image = item.findtext('{http://base.google.com/ns/1.0}image_link') or ''
+
+        products.append({
+            "title": title.strip(),
+            "price": price.strip(),
+            "image": image.strip()
+        })
+    return products
+
+
+# -------------------------------
+# Streamlit UI
+# -------------------------------
 st.set_page_config(page_title="Style Threadz Products", layout="wide")
-
 st.title("🛍️ Style Threadz Products")
-st.write("Fetched directly from Spreadshop RSS Feed")
 
-# Fetch RSS data
-feed = feedparser.parse(RSS_URL)
-
-if not feed.entries:
-    st.error("⚠️ Could not fetch products. Please check the RSS URL.")
-else:
-    for entry in feed.entries:
-        with st.container():
-            cols = st.columns([1, 3])  # image | details
-
-            # Product Image
-            if "media_content" in entry and entry.media_content:
-                img_url = entry.media_content[0]['url']
-                cols[0].image(img_url, use_container_width=True)
-
-            # Product Details
-            cols[1].markdown(f"### [{entry.title}]({entry.link})")
-            cols[1].write(entry.description)
-            
-            # Sometimes price is in 'summary' or custom tags
-            if hasattr(entry, "summary"):
-                cols[1].markdown(f"💲 **{entry.summary}**")
-            
-            st.divider()
-      
+try:
+    products = fetch_products_from_rss()
+    if not products:
+        st.warning("No products found.")
+    else:
+        cols_per_row = 4
+        for i in range(0, len(products), cols_per_row):
+            cols = st.columns(cols_per_row)
+            for col, prod in zip(cols, products[i:i+cols_per_row]):
+                with col:
+                    # Product card
+                    st.image(prod["image"], use_column_width=True)
+                    st.subheader(prod["title"])
+                    st.write(f"**Price:** {prod['price']}")
+                    # ✅ Fixed redirect link (always goes to stylethreadz.com)
+                    st.markdown(
+                        '[👉 View on StyleThreadz](https://stylethreadz.com/)', 
+                        unsafe_allow_html=True
+                    )
+except Exception as e:
+    st.error(f"Error loading products: {e}")
+    
