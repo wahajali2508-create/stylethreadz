@@ -42,15 +42,26 @@ try:
             cols = st.columns(cols_per_row)
             for col, prod in zip(cols, products[i:i+cols_per_row]):
                 with col:
-                    # Product card
-                    st.image(prod["image"], use_column_width=True)
+                    # Product image
+                    if prod["image"]:
+                        st.image(prod["image"], use_container_width=True)
+
+                    # Product title and price
                     st.subheader(prod["title"])
                     st.write(f"**Price:** {prod['price']}")
-                    # ✅ Fixed redirect link (always goes to stylethreadz.com)
-                    st.markdown(
-                        '[👉 View on StyleThreadz](https://stylethreadz.com/)', 
-                        unsafe_allow_html=True
-                    )
+
+                    # ✅ Stylish button (fixed redirect link)
+                    button_html = """
+                    <a href="https://stylethreadz.com/" target="_blank" rel="noopener noreferrer"
+                       style="display:inline-block; padding:10px 18px; margin-top:6px;
+                              background:linear-gradient(90deg, #00c6ff, #0072ff);
+                              color:white; border-radius:8px; font-weight:bold;
+                              text-decoration:none; box-shadow:0px 4px 8px rgba(0,0,0,0.2);
+                              transition:0.3s;">
+                        👉 View on StyleThreadz
+                    </a>
+                    """
+                    st.markdown(button_html, unsafe_allow_html=True)
 except Exception as e:
     st.error(f"Error loading products: {e}")
-        
+    
