@@ -15,11 +15,13 @@ def fetch_products_from_rss():
     products = []
     for item in root.findall('.//item'):
         title = item.findtext('title') or ''
+        link = item.findtext('link') or ''   # Spreadshop product link
         price = item.findtext('{http://base.google.com/ns/1.0}price') or ''
         image = item.findtext('{http://base.google.com/ns/1.0}image_link') or ''
 
         products.append({
             "title": title.strip(),
+            "link": link.strip(),
             "price": price.strip(),
             "image": image.strip()
         })
@@ -42,15 +44,23 @@ try:
             cols = st.columns(cols_per_row)
             for col, prod in zip(cols, products[i:i+cols_per_row]):
                 with col:
-                    # Product card
-                    st.image(prod["image"], use_column_width=True)
-                    st.subheader(prod["title"])
-                    st.write(f"**Price:** {prod['price']}")
-                    # ✅ Fixed redirect link (always goes to stylethreadz.com)
-                    st.markdown(
-                        '[👉 View on StyleThreadz](https://stylethreadz.com/)', 
-                        unsafe_allow_html=True
-                    )
+                    # ✅ Product Card (image + title + price + button)
+                    html = f"""
+                    <div style="border:1px solid #ddd; border-radius:10px; 
+                                padding:10px; text-align:center; margin-bottom:15px;">
+                        <a href="{prod['link']}" target="_blank" rel="noopener noreferrer">
+                            <img src="{prod['image']}" style="width:100%; border-radius:8px;" />
+                        </a>
+                        <h4 style="margin:8px 0; color:#333;">{prod['title']}</h4>
+                        <p style="font-weight:bold; color:green; margin:5px 0;">{prod['price']}</p>
+                        <a href="{prod['link']}" target="_blank" rel="noopener noreferrer"
+                           style="display:inline-block; padding:6px 12px; background:#00c0ff;
+                                  color:white; border-radius:5px; text-decoration:none; font-weight:bold;">
+                           View Product
+                        </a>
+                    </div>
+                    """
+                    col.markdown(html, unsafe_allow_html=True)
 except Exception as e:
     st.error(f"Error loading products: {e}")
     
