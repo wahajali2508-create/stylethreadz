@@ -31,7 +31,10 @@ items = root.findall('.//item')
 cols = st.columns(3)
 for i, item in enumerate(items):
     # Basic details
-    title = item.find('title').text if item.find('title') is not None else "No Title"
+    title_element = item.find('title')
+if title_element is None:
+    title_element = item.find('g:title', ns)
+title = title_element.text.strip() if title_element is not None else "No Title"
     description = item.find('description').text if item.find('description') is not None else ""
     price = item.find('g:price', ns).text if item.find('g:price', ns) is not None else "N/A"
     image_link = item.find('g:image_link', ns).text if item.find('g:image_link', ns) is not None else ""
